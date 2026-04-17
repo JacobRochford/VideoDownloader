@@ -1,11 +1,13 @@
 @echo off
 setlocal EnableDelayedExpansion
 
+set "SCRIPT_VERSION=1.0.0"
 set "SCRIPT_DIR=%~dp0"
 set "DOWNLOADS_DIR=%SCRIPT_DIR%downloads"
 
 echo ==============================
 echo  VIDEO DOWNLOADER
+echo  Version %SCRIPT_VERSION%
 echo ==============================
 echo.
 
