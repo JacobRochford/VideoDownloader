@@ -9,6 +9,26 @@ echo  VIDEO DOWNLOADER
 echo ==============================
 echo.
 
+where yt-dlp >nul 2>nul
+if %errorlevel% neq 0 (
+  echo yt-dlp was not found.
+  echo Run Install-Dependencies.bat before using this downloader.
+  goto exit
+)
+
+where ffmpeg >nul 2>nul
+if %errorlevel% neq 0 (
+  echo FFmpeg was not found.
+  echo Run Install-Dependencies.bat before using this downloader.
+  goto exit
+)
+
+where deno >nul 2>nul
+if %errorlevel% neq 0 (
+  echo Deno was not found.
+  echo Run Install-Dependencies.bat before using this downloader.
+  goto exit
+)
 
 :: Always save and open downloads relative to this script's folder.
 if not exist "%DOWNLOADS_DIR%" mkdir "%DOWNLOADS_DIR%"
