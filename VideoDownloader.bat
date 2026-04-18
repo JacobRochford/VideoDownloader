@@ -3,7 +3,8 @@ setlocal EnableDelayedExpansion
 
 set "SCRIPT_VERSION=1.0.0"
 set "SCRIPT_DIR=%~dp0"
-set "DOWNLOADS_DIR=%SCRIPT_DIR%downloads"
+set "DOWNLOADS_DIR=%SCRIPT_DIR%videos"
+pushd "%SCRIPT_DIR%" >nul 2>nul
 
 echo ==============================
 echo  VIDEO DOWNLOADER
@@ -85,3 +86,4 @@ echo Opening downloads folder...
 explorer "%DOWNLOADS_DIR%"
 :exit
 pause
+popd >nul 2>nul

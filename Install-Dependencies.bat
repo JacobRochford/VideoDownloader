@@ -1,10 +1,11 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-set "SCRIPT_VERSION=1.0.0"
+set "SCRIPT_DIR=%~dp0"
 set "SETUP_FAILED=0"
 set "RESTART_REQUIRED=0"
 set "PYTHON_CMD="
+pushd "%SCRIPT_DIR%" >nul 2>nul
 
 echo ==============================
 echo  INSTALL DEPENDENCIES
@@ -150,3 +151,4 @@ if %errorlevel% equ 0 (
     echo   Deno: NOT FOUND
 )
 pause
+popd >nul 2>nul
