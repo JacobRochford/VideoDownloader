@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 
-set "SCRIPT_VERSION=1.0.0"
+set "SCRIPT_VERSION=1.1.0"
 set "SCRIPT_DIR=%~dp0"
 set "DOWNLOADS_DIR=%SCRIPT_DIR%videos"
 
@@ -76,6 +76,7 @@ yt-dlp ^
   --merge-output-format mkv ^
   --remux-video mkv ^
   --embed-metadata ^
+  --embed-chapters ^
   --embed-thumbnail ^
   --concurrent-fragments 4 ^
   --js-runtimes deno ^
