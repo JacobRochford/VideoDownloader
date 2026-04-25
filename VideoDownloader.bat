@@ -1,4 +1,4 @@
-@echo off
+@echo off 
 setlocal EnableExtensions EnableDelayedExpansion
 
 set "SCRIPT_VERSION=1.1.0"
@@ -39,10 +39,10 @@ if %errorlevel% neq 0 (
 if not exist "%DOWNLOADS_DIR%" mkdir "%DOWNLOADS_DIR%"
 
 :input
+echo.
 echo Paste a YouTube URL (or type EXIT to quit):
 set "URL="
 set /p URL=
-if errorlevel 1 goto finish
 
 if /i "%URL%"=="exit" goto finish
 
@@ -55,14 +55,12 @@ echo %URL% | findstr /i "list=" >nul
 if %errorlevel% equ 0 (
   set "DOWNLOAD_MODE=playlist"
   set "PLAYLIST_FLAG=--yes-playlist"
-  set "OUTPUT_TEMPLATE=%DOWNLOADS_DIR%\%%(playlist_title)s [%%(playlist_id)s]\%%(playlist_index)03d - %%(title)s [%%(id)s].%%(ext)s"
+  set "OUTPUT_TEMPLATE=%DOWNLOADS_DIR%\%%(playlist_title)s\%%(playlist_index)03d - %%(title)s.%%(ext)s"
 ) else (
   set "DOWNLOAD_MODE=single video"
   set "PLAYLIST_FLAG=--no-playlist"
-  set "OUTPUT_TEMPLATE=%DOWNLOADS_DIR%\%%(title)s [%%(id)s].%%(ext)s"
+  set "OUTPUT_TEMPLATE=%DOWNLOADS_DIR%\%%(title)s.%%(ext)s"
 )
-
-:mode_ready
 
 echo.
 echo Detected: !DOWNLOAD_MODE!
@@ -88,28 +86,17 @@ yt-dlp ^
 echo.
 if %errorlevel% neq 0 (
     echo Download failed.
-  echo Check the URL, selected format, and confirm Install-Dependencies.bat completed successfully.
+    echo Check the URL and dependencies.
 ) else (
     echo Download complete.
 )
 
-:repeat_prompt
-echo.
-set "AGAIN="
-set /p AGAIN=Download another? (y/n): 
-
-if errorlevel 1 goto finish
-if not defined AGAIN goto finish
-
-if /i "%AGAIN%"=="y" goto input
-if /i "%AGAIN%"=="n" goto finish
-
-echo Please enter Y or N.
-goto repeat_prompt
+goto input
 
 :finish
 echo Opening downloads folder...
 explorer "%DOWNLOADS_DIR%"
+
 :exit
 pause
 popd >nul 2>nul
