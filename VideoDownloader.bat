@@ -38,21 +38,47 @@ if %errorlevel% neq 0 (
 :: Always save and open downloads relative to this script's folder.
 if not exist "%DOWNLOADS_DIR%" mkdir "%DOWNLOADS_DIR%"
 
+yt-dlp ^
+goto input
+
 :input
 echo.
-echo Paste a YouTube URL (or type EXIT to quit):
-set "URL="
-set /p URL=
+echo Paste YouTube URLs (comma, newline, or space separated, or type EXIT to quit):
+set "URLS="
+set /p URLS=
 
-if /i "%URL%"=="exit" goto finish
+if /i "%URLS%"=="exit" goto finish
 
-if "%URL%"=="" (
+if "%URLS%"=="" (
     echo No URL entered. Try again.
     goto input
 )
 
-echo %URL% | findstr /i "list=" >nul
-if %errorlevel% equ 0 (
+:: Combine all arguments if passed via command line
+if not "%~1"=="" (
+  set "URLS=%*"
+)
+
+:: Replace commas with spaces
+set "URLS=%URLS:,= %"
+
+:: Split URLs by space or newline and process each
+for %%U in (%URLS%) do call :process_url "%%U"
+
+goto input
+
+:process_url
+setlocal EnableDelayedExpansion
+set "RAW_URL=%~1"
+:: Remove surrounding quotes and whitespace
+set "URL=!RAW_URL!"
+for /f "tokens=*" %%A in ("!URL!") do set "URL=%%A"
+set "URL=!URL:~0,512!"
+if "!URL!"=="" exit /b
+
+:: Detect playlist or single video
+echo !URL! | findstr /i "list=" >nul
+if !errorlevel! equ 0 (
   set "DOWNLOAD_MODE=playlist"
   set "PLAYLIST_FLAG=--yes-playlist"
   set "OUTPUT_TEMPLATE=%DOWNLOADS_DIR%\%%(playlist_title)s\%%(playlist_index)03d - %%(title)s.%%(ext)s"
@@ -83,15 +109,14 @@ yt-dlp ^
   -o "!OUTPUT_TEMPLATE!" ^
   "!URL!"
 
-echo.
-if %errorlevel% neq 0 (
-    echo Download failed.
+if !errorlevel! neq 0 (
+    echo Download failed for !URL!.
     echo Check the URL and dependencies.
 ) else (
-    echo Download complete.
+    echo Download complete for !URL!.
 )
-
-goto input
+endlocal
+exit /b
 
 :finish
 echo Opening downloads folder...
