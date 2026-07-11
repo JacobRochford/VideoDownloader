@@ -1,125 +1,97 @@
-@echo off 
-setlocal EnableExtensions EnableDelayedExpansion
-
-set "SCRIPT_VERSION=1.1.0"
+@echo off
+chcp 65001 >nul
+setlocal EnableExtensions
 set "SCRIPT_DIR=%~dp0"
-set "DOWNLOADS_DIR=%SCRIPT_DIR%videos"
+pushd "%SCRIPT_DIR%"
 
-pushd "%SCRIPT_DIR%" >nul 2>nul
-title VideoDownloader
+set "FORCE_SETUP="
+set "SHOW_MENU="
 
-echo ==============================
-echo  VIDEO DOWNLOADER
-echo  Version %SCRIPT_VERSION%
-echo ==============================
-echo.
+:parseArgs
+if "%~1"=="" goto afterArgs
+if /I "%~1"=="--setup" set "FORCE_SETUP=1"
+if /I "%~1"=="/setup" set "FORCE_SETUP=1"
+if /I "%~1"=="--install" set "FORCE_SETUP=1"
+if /I "%~1"=="--menu" set "SHOW_MENU=1"
+if /I "%~1"=="/menu" set "SHOW_MENU=1"
+shift
+goto parseArgs
 
-where yt-dlp >nul 2>nul
-if %errorlevel% neq 0 (
-  echo yt-dlp was not found.
-  echo Run Install-Dependencies.bat before using this downloader.
-  goto exit
+:afterArgs
+
+if defined FORCE_SETUP goto verifyDependencies
+
+call :haveCommand pwsh
+if errorlevel 1 goto verifyDependencies
+call :haveCommand yt-dlp
+if errorlevel 1 goto verifyDependencies
+call :haveCommand ffmpeg
+if errorlevel 1 goto verifyDependencies
+call :haveCommand deno
+if errorlevel 1 goto verifyDependencies
+
+echo [OK] Dependencies already available. Skipping setup.
+goto launch
+
+:verifyDependencies
+where winget >nul 2>&1
+if errorlevel 1 (
+    echo [X] winget not found. Install App Installer or add dependencies manually.
+    popd & exit /b 1
 )
 
-where ffmpeg >nul 2>nul
-if %errorlevel% neq 0 (
-  echo FFmpeg was not found.
-  echo Run Install-Dependencies.bat before using this downloader.
-  goto exit
+echo [!] Verifying dependencies...
+
+:: NOTE: --accept-package-agreements silently accepts third-party EULAs for:
+::   Microsoft PowerShell 7, yt-dlp, Gyan/FFmpeg Essentials, DenoLand.Deno
+:: Review each project's license before distributing this script.
+:: NOTE: Deno is required by yt-dlp at runtime for full YouTube support (yt-dlp-ejs).
+call :ensurePackage Microsoft.PowerShell pwsh
+if errorlevel 1 popd & exit /b 1
+call :ensurePackage yt-dlp.yt-dlp yt-dlp
+if errorlevel 1 popd & exit /b 1
+call :ensurePackage Gyan.FFmpeg.Essentials ffmpeg
+if errorlevel 1 popd & exit /b 1
+call :ensurePackage DenoLand.Deno deno
+if errorlevel 1 popd & exit /b 1
+
+:launch
+echo [OK] Launching ClipboardWatcher...
+set "VIDEODOWNLOADER_LAUNCHED=1"
+set "LAUNCH_ARGS="
+if defined SHOW_MENU set "LAUNCH_ARGS=-ShowMenu"
+start "Video Downloader" pwsh -NoProfile -ExecutionPolicy RemoteSigned ^
+    -File "%SCRIPT_DIR%lib\ClipboardWatcher.ps1" %LAUNCH_ARGS%
+popd
+exit /b 0
+
+:haveCommand
+where "%~1" >nul 2>&1
+exit /b %errorlevel%
+
+:ensurePackage
+set "PACKAGE_ID=%~1"
+set "COMMAND_NAME=%~2"
+
+call :haveCommand "%COMMAND_NAME%"
+if not errorlevel 1 (
+    echo [OK] %PACKAGE_ID% ready.
+    exit /b 0
 )
 
-where deno >nul 2>nul
-if %errorlevel% neq 0 (
-  echo Deno was not found.
-  echo Run Install-Dependencies.bat before using this downloader.
-  goto exit
+echo [!] Installing %PACKAGE_ID%...
+winget install --id %PACKAGE_ID% -e --accept-package-agreements
+if errorlevel 1 (
+    echo [X] Install failed for %PACKAGE_ID%.
+    popd & exit /b 1
 )
 
-:: Always save and open downloads relative to this script's folder.
-if not exist "%DOWNLOADS_DIR%" mkdir "%DOWNLOADS_DIR%"
-
-
-goto input
-
-:input
-echo.
-echo Paste YouTube URLs (comma, newline, or space separated, or type EXIT to quit):
-set "URLS="
-set /p URLS=
-
-if /i "%URLS%"=="exit" goto finish
-
-if "%URLS%"=="" (
-    echo No URL entered. Try again.
-    goto input
+call :haveCommand "%COMMAND_NAME%"
+if errorlevel 1 (
+    echo [X] %COMMAND_NAME% not found after install.
+    echo     Close this window, open a new terminal, and run the script again.
+    popd & exit /b 1
 )
 
-:: Clean up leading/trailing spaces safely using a quick string replacement trick
-for /f "tokens=*" %%A in ("%URLS%") do set "URLS=%%A"
-
-:: Replace commas with spaces
-set "URLS=%URLS:,= %"
-
-:: Split URLs by space and process each
-for %%U in (%URLS%) do call :process_url "%%U"
-
-goto input
-
-:process_url
-setlocal EnableDelayedExpansion
-set "RAW_URL=%~1"
-:: Remove surrounding quotes and whitespace
-set "URL=!RAW_URL!"
-for /f "tokens=*" %%A in ("!URL!") do set "URL=%%A"
-set "URL=!URL:~0,512!"
-if "!URL!"=="" exit /b
-
-:: Detect playlist or single video
-echo !URL! | findstr /i "list=" >nul
-if !errorlevel! equ 0 (
-  set "DOWNLOAD_MODE=playlist"
-  set "PLAYLIST_FLAG=--yes-playlist"
-  set "OUTPUT_TEMPLATE=%DOWNLOADS_DIR%\%%(playlist_title)s\%%(playlist_index)03d - %%(title)s.%%(ext)s"
-) else (
-  set "DOWNLOAD_MODE=single video"
-  set "PLAYLIST_FLAG=--no-playlist"
-  set "OUTPUT_TEMPLATE=%DOWNLOADS_DIR%\%%(title)s.%%(ext)s"
-)
-
-echo.
-echo Detected: !DOWNLOAD_MODE!
-echo Downloading:
-echo !URL!
-echo Format: MKV
-echo ------------------------------
-
-yt-dlp ^
-  -f "bv*+ba/b" ^
-  --merge-output-format mkv ^
-  --remux-video mkv ^
-  --embed-metadata ^
-  --embed-chapters ^
-  --embed-thumbnail ^
-  --concurrent-fragments 4 ^
-  --js-runtimes deno ^
-  !PLAYLIST_FLAG! ^
-  --restrict-filenames ^
-  -o "!OUTPUT_TEMPLATE!" ^
-  "!URL!"
-
-if !errorlevel! neq 0 (
-    echo Download failed for !URL!.
-    echo Check the URL and dependencies.
-) else (
-    echo Download complete for !URL!.
-)
-endlocal
-exit /b
-
-:finish
-echo Opening downloads folder...
-explorer "%DOWNLOADS_DIR%"
-
-:exit
-pause
-popd >nul 2>nul
+echo [OK] %PACKAGE_ID% ready.
+exit /b 0
