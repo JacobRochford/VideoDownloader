@@ -4,3 +4,9 @@ Thumbs.db
 Desktop.ini
 *.log
 *.bak
+
+# Runtime-generated user state — DO NOT COMMIT
+config.json
+yt-dlp-pin.json
+download_history.json
+playlist_history.json
