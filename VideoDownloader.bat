@@ -38,7 +38,7 @@ if %errorlevel% neq 0 (
 :: Always save and open downloads relative to this script's folder.
 if not exist "%DOWNLOADS_DIR%" mkdir "%DOWNLOADS_DIR%"
 
-yt-dlp ^
+
 goto input
 
 :input
@@ -54,15 +54,13 @@ if "%URLS%"=="" (
     goto input
 )
 
-:: Combine all arguments if passed via command line
-if not "%~1"=="" (
-  set "URLS=%*"
-)
+:: Clean up leading/trailing spaces safely using a quick string replacement trick
+for /f "tokens=*" %%A in ("%URLS%") do set "URLS=%%A"
 
 :: Replace commas with spaces
 set "URLS=%URLS:,= %"
 
-:: Split URLs by space or newline and process each
+:: Split URLs by space and process each
 for %%U in (%URLS%) do call :process_url "%%U"
 
 goto input
