@@ -1,0 +1,58 @@
+name: Release
+
+# Triggers when a tag matching the format "v1.2.3" is pushed.
+# Workflow: update VERSION file, commit, then: git tag v1.2.3 && git push origin v1.2.3
+on:
+  push:
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate tag matches VERSION file
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          FILE="$(cat VERSION)"
+          if [ "$TAG" != "$FILE" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match VERSION file (contains: $FILE). Update VERSION before tagging."
+            exit 1
+          fi
+          echo "VERSION=$FILE" >> "$GITHUB_ENV"
+
+      - name: Extract changelog entry
+        run: |
+          awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{if(flag)exit} flag" CHANGELOG.md \
+            | sed '/^[[:space:]]*$/d' \
+            > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "::error::No changelog entry found for [$VERSION] in CHANGELOG.md"
+            exit 1
+          fi
+          echo "--- Release notes preview ---"
+          cat release_notes.md
+
+      - name: Create release archive
+        run: |
+          zip "VideoDownloader-v${VERSION}.zip" \
+            VideoDownloader.bat \
+            lib/ClipboardWatcher.ps1 \
+            config.example.json \
+            VERSION \
+            README.md \
+            LICENSE
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "VideoDownloader v${{ env.VERSION }}"
+          body_path: release_notes.md
+          files: "VideoDownloader-v${{ env.VERSION }}.zip"
+          fail_on_unmatched_files: true
