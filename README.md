@@ -1,144 +1,164 @@
 # VideoDownloader
 
-A Windows batch utility script for downloading YouTube videos and playlists in the best quality available, saved as merged MKV files with embedded metadata.
+A Windows console utility for downloading YouTube videos and playlists using yt-dlp and FFmpeg.
 
-## Description
+Run the batch script, paste one or more URLs, and download the best available video and audio as merged MKV files.
 
-**VideoDownloader** downloads YouTube videos and playlists with minimal setup. It:
+## Features
 
-- Detects single videos and playlists from pasted YouTube URLs
-- Grabs the best available video and audio streams
-- Merges them into a single MKV file
-- Embeds metadata, chapters, and thumbnails automatically
-- Saves everything in a clean `videos` folder structure
+- Download single videos or full playlists.
+- Enter multiple URLs separated by commas or spaces.
+- Process URLs sequentially.
+- Download up to four fragments concurrently within each download.
+- Merge video and audio into MKV files.
+- Embed metadata, chapters, and thumbnails.
+- Save downloads in a `videos` folder beside the script.
+- Organize playlist downloads into separate folders.
+- Open the downloads folder when you type `EXIT`.
 
+## Requirements
 
-## Tech Stack
+- Windows 10 or later.
+- winget, provided by Microsoft's App Installer.
+- Python 3 and pip.
+- yt-dlp.
+- FFmpeg.
+- Deno.
 
-| Component | Purpose | Technology |
-|-----------|---------|------------|
-| **Downloader** | YouTube video extraction | [yt-dlp](https://github.com/yt-dlp/yt-dlp) |
-| **Video Merger** | Combines streams & converts format | [FFmpeg](https://ffmpeg.org/) |
-| **Runtime** | Video processing scripts | [Deno](https://deno.com/) |
-| **Package Manager** | Installs dependencies | [winget](https://github.com/microsoft/winget-cli) |
-| **Script Language** | Main application logic | Windows Batch (CMD) |
+The included installer attempts to install missing dependencies and install or upgrade yt-dlp.
 
 ## Installation
 
-### Prerequisites
-- **Windows 10 or later**
-- **winget** (included on most modern Windows installations)
+1. Clone the repository's `master` branch:
 
-### Quick Start
-
-1. **Clone or download** this repository to your desired location:
    ```cmd
-   cd C:\Users\{YourUsername}\Desktop
-   git clone https://github.com/JacobRochford/VideoDownloader.git
+   git clone --branch master --single-branch https://github.com/JacobRochford/VideoDownloader.git
    cd VideoDownloader
    ```
 
-2. **Run the dependency installer:**
+   Alternatively, download and extract the `master` branch ZIP from GitHub.
+
+2. Run:
+
    ```cmd
    Install-Dependencies.bat
    ```
-   
-   This script will automatically install:
-   - Python 3
-   - yt-dlp (Python package)
-   - FFmpeg (Essentials build)
-   - Deno
-   
-   **Note:** After installation, you may need to reopen your terminal if Python was freshly installed.
 
-3. **Verify installation** — The installer will display a verification summary. All required tools should verify successfully. Python may appear as **OK via py launcher** depending on your setup.
+3. Review the tool verification summary.
+
+   If a tool is not found, reopen your terminal and run the installer again. Newly installed tools may not be available in the current terminal session.
 
 ## Usage
 
-1. **Run the downloader:**
+1. Run:
+
    ```cmd
    VideoDownloader.bat
    ```
 
-2. **Paste a YouTube URL** when prompted:
-   ```
-   ==============================
-    VIDEO DOWNLOADER
-   Version 1.1.0
-   ==============================
-   
-   Paste a YouTube URL (or type EXIT to quit):
-   https://www.youtube.com/watch?v=dQw4w9WgXcQ
+2. Paste a YouTube URL at the prompt and press Enter:
+
+   ```text
+   Paste YouTube URLs (comma, newline, or space separated, or type EXIT to quit):
+   https://www.youtube.com/watch?v=VIDEO_ID
    ```
 
-3. **Wait for it to finish** — The script will:
-   - Download the best video and audio (or full playlist if detected)
-   - Merge them into MKV format
-   - Add metadata and thumbnail
-   - Save to the `videos` folder (organized by playlist if applicable)
+   For multiple URLs, use commas or spaces on one line:
 
-4. **Next steps:**
-   - Press `y` to download another video
-   - Press `n` to exit
+   ```text
+   https://www.youtube.com/watch?v=VIDEO_ID_1, https://www.youtube.com/watch?v=VIDEO_ID_2
+   ```
 
+   Although the prompt mentions newline separation, comma or space separated input on one line is the supported way to submit multiple URLs.
 
-**Single videos save as:**
-`videos\[video_title] [video_id].mkv`
+3. Wait for the downloads to finish.
 
-**Playlists save as:**
-`videos\[playlist_title] [playlist_id]\[playlist_index] - [video_title] [video_id].mkv`
+   URLs containing `list=` are treated as playlists. Other URLs are treated as single videos.
 
-**Example (single):**
-`videos\Stop_Updating_Your_Software_No_Seriously [WBgdAkol0VQ].mkv`
+4. The script returns to the URL prompt after processing your input. Enter more URLs, or type:
 
-**Example (playlist):**
-`videos\My_Playlist [PL12345]\001 - Alan_Watts_Chillstep [abc123].mkv`
+   ```text
+   EXIT
+   ```
 
-## Features
+   The script opens the downloads folder and prompts you to press a key before closing.
 
-- Best quality output — top video and audio combined
-- MKV format — no quality loss
-- Playlist support — download full playlists with organized folder structure
-- Metadata & thumbnails automatically saved
-- Fast — up to 4 parallel downloads
-- Simple interface — just paste a URL (supports both single videos and playlists)
-- Clean filenames — handles special characters and organizes by playlist
-- One command setup — automatic dependency install
-- Helpful errors — clear messages if something goes wrong
+## Download Locations
+
+All downloads are saved relative to `VideoDownloader.bat`, regardless of the terminal's current directory.
+
+Single videos:
+
+```text
+videos\[video_title].mkv
+```
+
+Playlist videos:
+
+```text
+videos\[playlist_title]\[playlist_index] - [video_title].mkv
+```
+
+Playlist indexes use at least three digits, such as `001`.
+
+The script uses yt-dlp's restricted filename mode, so spaces and special characters may be replaced. Video and playlist IDs are not included in the filename templates.
+
+## How It Works
+
+| Component | Purpose |
+|-----------|---------|
+| Windows Batch | Console interface and download workflow |
+| Python and pip | Install and run yt-dlp |
+| yt-dlp | Extract and download video and audio |
+| FFmpeg | Merge and remux media into MKV files |
+| Deno | JavaScript runtime supplied to yt-dlp |
+| winget | Install dependencies |
+
+The script requests the best available video and audio streams, with a fallback to a combined stream. Available quality depends on the source video.
 
 ## Troubleshooting
 
-### "Python was not found"
-- Check installation: `python --version`
-- Close and reopen Command Prompt
-- Run `Install-Dependencies.bat` again
+### winget was not found
 
-### "yt-dlp was not found"
-- Run `Install-Dependencies.bat` again
-- Close and reopen Command Prompt
-- Run `VideoDownloader.bat` again
+Install Microsoft's App Installer from the Microsoft Store, then run `Install-Dependencies.bat` again.
 
-### "FFmpeg was not found"
-- Verify FFmpeg installation: `ffmpeg -version`
-- If missing, run `Install-Dependencies.bat` again
+### Python or another dependency is not found after installation
 
-### "Deno was not found"
-- Verify Deno installation: `deno --version`
-- If missing, reinstall via `Install-Dependencies.bat`
+Close and reopen your terminal, then run:
 
-### Download fails with error
-1. Verify the URL is a valid YouTube link
-2. Check internet connection
-3. Some videos may have restrictions—try another video
-4. Check FFmpeg is properly installed
+```cmd
+Install-Dependencies.bat
+```
 
-### Tools not found after install
-- Close and reopen your terminal
-- Run `Install-Dependencies.bat` again
+Review the installation messages and tool verification summary for failures.
+
+### yt-dlp was not found
+
+Run `Install-Dependencies.bat` to install or upgrade yt-dlp.
+
+If the downloader still cannot find it, verify that the Python Scripts directory containing `yt-dlp` is on your PATH.
+
+### FFmpeg or Deno was not found
+
+Run `Install-Dependencies.bat`, reopen your terminal, and check:
+
+```cmd
+ffmpeg -version
+deno --version
+```
+
+### A download fails
+
+- Check that the URL is valid and your internet connection is working.
+- Review yt-dlp's error output.
+- Run `Install-Dependencies.bat` to update yt-dlp.
+- Confirm that FFmpeg and Deno are available.
+- Try another video to determine whether the failure is specific to that content.
+
+Some videos may be unavailable because of access restrictions or removal.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE).
 
-
-**Version:** 1.1.0 | April 2026
+**Version:** 1.1.0
