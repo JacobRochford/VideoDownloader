@@ -4,3 +4,6 @@ Thumbs.db
 Desktop.ini
 *.log
 *.bak
+config.json
+download_history.json
+yt-dlp-pin.json

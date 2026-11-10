@@ -38,12 +38,11 @@ if %errorlevel% neq 0 (
 :: Always save and open downloads relative to this script's folder.
 if not exist "%DOWNLOADS_DIR%" mkdir "%DOWNLOADS_DIR%"
 
-yt-dlp ^
 goto input
 
 :input
 echo.
-echo Paste YouTube URLs (comma, newline, or space separated, or type EXIT to quit):
+echo Paste YouTube URLs (comma or space separated, or type EXIT to quit):
 set "URLS="
 set /p URLS=
 
@@ -62,7 +61,7 @@ if not "%~1"=="" (
 :: Replace commas with spaces
 set "URLS=%URLS:,= %"
 
-:: Split URLs by space or newline and process each
+:: Split URLs by space and process each
 for %%U in (%URLS%) do call :process_url "%%U"
 
 goto input

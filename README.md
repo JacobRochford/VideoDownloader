@@ -59,7 +59,7 @@ The included installer attempts to install missing dependencies and install or u
 2. Paste a YouTube URL at the prompt and press Enter:
 
    ```text
-   Paste YouTube URLs (comma, newline, or space separated, or type EXIT to quit):
+   Paste YouTube URLs (comma or space separated, or type EXIT to quit):
    https://www.youtube.com/watch?v=VIDEO_ID
    ```
 
@@ -68,8 +68,6 @@ The included installer attempts to install missing dependencies and install or u
    ```text
    https://www.youtube.com/watch?v=VIDEO_ID_1, https://www.youtube.com/watch?v=VIDEO_ID_2
    ```
-
-   Although the prompt mentions newline separation, comma or space separated input on one line is the supported way to submit multiple URLs.
 
 3. Wait for the downloads to finish.
 
